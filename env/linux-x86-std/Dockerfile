@@ -34,7 +34,7 @@ RUN apt-get clean
 RUN mkdir -p /go1.4-amd64 && (curl --silent https://storage.googleapis.com/golang/go1.4.linux-amd64.tar.gz | tar -C /go1.4-amd64 -zxv)
 RUN mv /go1.4-amd64/go /go1.4 && rmdir /go1.4-amd64
 
-RUN curl -o /usr/local/bin/stage0 https://storage.googleapis.com/go-builder-data/stage0.linux-amd64.92ebb4ec
+RUN curl -o /usr/local/bin/stage0 https://storage.googleapis.com/proppy-stuff-dump/stage0.linux-amd64
 RUN chmod +x /usr/local/bin/stage0
 
 ADD scripts/rc.local /etc/init.d/rc.local

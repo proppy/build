@@ -22,6 +22,7 @@ type BuildConfig struct {
 	Notes       string // notes for humans
 	Owner       string // e.g. "bradfitz@golang.org", empty means golang-dev
 	VMImage     string // e.g. "openbsd-amd64-56"
+	DockerImage string // e.g. "golang/linux-buildlet-std
 	machineType string // optional GCE instance type
 	Go14URL     string // URL to built Go 1.4 tar.gz
 	buildletURL string // optional override buildlet URL
@@ -178,9 +179,10 @@ func init() {
 		env:         []string{"GOROOT_BOOTSTRAP=/go1.4", "GOARCH=386", "GOHOSTARCH=386", "GO386=387"},
 	})
 	addBuilder(BuildConfig{
-		Name:    "linux-amd64",
-		VMImage: "linux-buildlet-std",
-		env:     []string{"GOROOT_BOOTSTRAP=/go1.4"},
+		Name: "linux-amd64",
+		//VMImage: "linux-buildlet-std",
+		DockerImage: "gcr.io/proppy_stuff/golang-linux-x86-std",
+		env:         []string{"GOROOT_BOOTSTRAP=/go1.4"},
 	})
 	addBuilder(BuildConfig{
 		Name:        "all-compile",
@@ -379,8 +381,8 @@ func addBuilder(c BuildConfig) {
 	if _, dup := Builders[c.Name]; dup {
 		panic("dup name")
 	}
-	if c.VMImage == "" && !c.IsReverse {
-		panic("empty VMImage")
+	if c.VMImage == "" && !c.IsReverse && c.DockerImage == "" {
+		panic("empty VMImage/DockerImage")
 	}
 	Builders[c.Name] = c
 }

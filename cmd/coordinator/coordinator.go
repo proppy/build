@@ -883,6 +883,9 @@ type BuildletPool interface {
 }
 
 func poolForConf(conf dashboard.BuildConfig) (BuildletPool, error) {
+	if conf.DockerImage != "" {
+		return kubePool, nil
+	}
 	if conf.VMImage != "" {
 		return gcePool, nil
 	}
@@ -892,6 +895,7 @@ func poolForConf(conf dashboard.BuildConfig) (BuildletPool, error) {
 func newBuild(rev builderRev) (*buildStatus, error) {
 	// Note: can't acquire statusMu in newBuild, as this is called
 	// from findTryWork -> newTrySet, which holds statusMu.
+	log.Printf("newBuild: %v, builders: %v", rev, dashboard.Builders)
 
 	conf, ok := dashboard.Builders[rev.name]
 	if !ok {

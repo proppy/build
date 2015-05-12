@@ -74,10 +74,10 @@ func awaitNetwork() bool {
 }
 
 func buildletURL() string {
+	if v := os.Getenv("META_BUILDLET_BINARY_URL"); v != "" {
+		return v
+	}
 	if !metadata.OnGCE() {
-		if v := os.Getenv("META_BUILDLET_BINARY_URL"); v != "" {
-			return v
-		}
 		sleepFatalf("Not on GCE, and no META_BUILDLET_BINARY_URL specified.")
 	}
 	v, err := metadata.InstanceAttributeValue(attr)
