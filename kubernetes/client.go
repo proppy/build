@@ -25,6 +25,7 @@ const (
 	// APIEndpoint defines the base path for kubernetes API resources.
 	APIEndpoint     = "/api/v1"
 	defaultPod      = "/namespaces/default/pods"
+	defaultSecret   = "/namespaces/default/secrets"
 	defaultWatchPod = "/watch/namespaces/default/pods"
 	nodes           = "/nodes"
 )
@@ -337,4 +338,57 @@ func (c *Client) GetNodes(ctx context.Context) ([]api.Node, error) {
 		return nil, fmt.Errorf("failed to decode node list: %v", err)
 	}
 	return nodeList.Items, nil
+}
+
+// CreateSecret creates a new secret resource in the default secret namespace with
+// the given secret API specification.
+func (c *Client) CreateSecret(ctx context.Context, secret *api.Secret) error {
+	var secretJSON bytes.Buffer
+	if err := json.NewEncoder(&secretJSON).Encode(secret); err != nil {
+		return fmt.Errorf("failed to encode pod in json: %v", err)
+	}
+	postURL := c.endpointURL + defaultSecret
+	req, err := http.NewRequest("POST", postURL, &secretJSON)
+	if err != nil {
+		return fmt.Errorf("failed to create request: POST %q : %v", postURL, err)
+	}
+	res, err := ctxhttp.Do(ctx, c.httpClient, req)
+	if err != nil {
+		return fmt.Errorf("failed to make request: POST %q: %v", postURL, err)
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		return fmt.Errorf("failed to read request body for POST %q: %v", postURL, err)
+	}
+	if res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("http error: %d POST %q: %q: %v", res.StatusCode, postURL, string(body), err)
+	}
+	return nil
+}
+
+// GetSecret returns the specified secret from the default secret namespace.
+func (c *Client) GetSecret(ctx context.Context, name string) (*api.Secret, error) {
+	getURL := c.endpointURL + defaultSecret + "/" + name
+	req, err := http.NewRequest("GET", getURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: GET %q : %v", getURL, err)
+	}
+	res, err := ctxhttp.Do(ctx, c.httpClient, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: GET %q: %v", getURL, err)
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body for GET %q: %v", getURL, err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("http error: %d GET %q: %q: %v", res.StatusCode, getURL, string(body), err)
+	}
+	var secretResult api.Secret
+	if err := json.Unmarshal(body, &secretResult); err != nil {
+		return nil, fmt.Errorf("failed to decode secret resources: %v", err)
+	}
+	return &secretResult, nil
 }
